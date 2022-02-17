@@ -42,3 +42,9 @@ Die Daten, anhand derer die das Analysemodell der ursprünglichen Arbeit erstell
 3.  [Ausführung von GerVADER2](czernin_bachelorarbeit/03_GerVader2.nb.html)
 4.  [Sentiment-Tendenzen objektiver Wörter](czernin_bachelorarbeit/04_objektiveWörter.nb.html)
 5.  [Sentiment-Analyse](czernin_bachelorarbeit/05_Sentiment_Analyse.nb.html)
+
+## Quellen
+In der Arbeit werden zahlreiche Arbeiten zitiert und in der Quellenangabe angeführt. Im Code selber werden die folgenden Arbeiten und GitHub-Repositories zitiert und ihr Code genutzt:
+- Karsten Michael Tymann, Matthias Lutz, Patrick Palsbröker and Carsten Gips: *GerVADER - A German adaptation of the VADER sentiment analysis tool for social media texts. In Proceedings of the Conference "Lernen, Wissen, Daten, Analysen" (LWDA 2019)*, Berlin, Germany, September 30 - October 2, 2019.
+- Hung, Chihli, und Hao-Kai Lin. 2013. *„Using Objective Words in SentiWordNet to Improve Word-of-Mouth Sentiment Classification.“* Intelligent Systems, Vol. 28(2): 47-54.
+
