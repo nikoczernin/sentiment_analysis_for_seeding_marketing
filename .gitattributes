@@ -3,3 +3,4 @@ czernin_bachelorarbeit/data/trnd/de_comments.csv filter=lfs diff=lfs merge=lfs -
 *.tsv filter=lfs diff=lfs merge=lfs -text
 czernin_bachelorarbeit/data/trnd_sentences_tidy.tsv filter=lfs diff=lfs merge=lfs -text
 czernin_bachelorarbeit/data/GerVader2_adjusted_sentences.tsv filter=lfs diff=lfs merge=lfs -text
+czernin_bachelorarbeit/data/GerVADER2/16022022_153600/GerVADER2_sentences.tsv filter=lfs diff=lfs merge=lfs -text
