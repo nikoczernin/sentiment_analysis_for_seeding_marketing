@@ -35,7 +35,8 @@ Die Daten, anhand derer die das Analysemodell der ursprünglichen Arbeit erstell
 
 </div>
 
-### R-Notebooks
+### Ausführung
+Die folgenden R-Notebooks müssen in der gegebenen Reihenfolge ausgeführt werden, da frühere die Daten für spätere erstellen.
 
 1.  [Laden der Daten](czernin_bachelorarbeit/01_DatenLaden.nb.html)
 2.  [Explorative Datenanalyse (optional)](czernin_bachelorarbeit/02_explorativeDatenAnalyse.nb.html)
