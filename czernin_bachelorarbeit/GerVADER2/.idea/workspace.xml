@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="764b6d54-17a0-4b42-9984-77f1cf361b49" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="20yaAHOTFBNzp8HSdlHQxiJGlp4" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RunManager" selected="Python.oida">
+    <configuration name="GERVADER2" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="/Library/Frameworks/Python.framework/Versions/3.8/bin/python3" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/.." />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="GERvaderModule" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/GERvaderModule.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="emojisLexicon" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/emojisLexicon.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="oida" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/oida.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="vaderSentimentGER" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GERVADER2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/vaderSentimentGER.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.GERVADER2" />
+      <item itemvalue="Python.GERvaderModule" />
+      <item itemvalue="Python.emojisLexicon" />
+      <item itemvalue="Python.oida" />
+      <item itemvalue="Python.test" />
+      <item itemvalue="Python.vaderSentimentGER" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.oida" />
+        <item itemvalue="Python.test" />
+        <item itemvalue="Python.emojisLexicon" />
+        <item itemvalue="Python.vaderSentimentGER" />
+        <item itemvalue="Python.GERvaderModule" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="764b6d54-17a0-4b42-9984-77f1cf361b49" name="Default Changelist" comment="" />
+      <created>1637019135593</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1637019135593</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="1984" y="196" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1637019168096">
+      <screen x="1680" y="25" width="1680" height="1025" />
+    </state>
+    <state x="1984" y="196" key="#com.intellij.execution.impl.EditConfigurationsDialog/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637019168096" />
+    <state width="1659" height="160" key="GridCell.Tab.0.bottom" timestamp="1637766512570">
+      <screen x="0" y="25" width="1680" height="993" />
+    </state>
+    <state width="1659" height="213" key="GridCell.Tab.0.bottom/-130.-1055.1920.1055/0.25.1680.993@-130.-1055.1920.1055" timestamp="1637159754308" />
+    <state width="1659" height="160" key="GridCell.Tab.0.bottom/0.25.1680.993@0.25.1680.993" timestamp="1637229175975" />
+    <state width="1659" height="160" key="GridCell.Tab.0.bottom/1680.25.1680.1025/0.25.1680.993@0.25.1680.993" timestamp="1637766512570" />
+    <state width="1659" height="160" key="GridCell.Tab.0.bottom/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637189642487" />
+    <state width="1659" height="338" key="GridCell.Tab.0.bottom/1680.25.1680.993/0.25.1680.1025@1680.25.1680.993" timestamp="1637094576678" />
+    <state width="1659" height="160" key="GridCell.Tab.0.center" timestamp="1637766512569">
+      <screen x="0" y="25" width="1680" height="993" />
+    </state>
+    <state width="1659" height="213" key="GridCell.Tab.0.center/-130.-1055.1920.1055/0.25.1680.993@-130.-1055.1920.1055" timestamp="1637159754307" />
+    <state width="1659" height="160" key="GridCell.Tab.0.center/0.25.1680.993@0.25.1680.993" timestamp="1637229175974" />
+    <state width="1659" height="160" key="GridCell.Tab.0.center/1680.25.1680.1025/0.25.1680.993@0.25.1680.993" timestamp="1637766512569" />
+    <state width="1659" height="160" key="GridCell.Tab.0.center/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637189642486" />
+    <state width="1659" height="338" key="GridCell.Tab.0.center/1680.25.1680.993/0.25.1680.1025@1680.25.1680.993" timestamp="1637094576676" />
+    <state width="1659" height="160" key="GridCell.Tab.0.left" timestamp="1637766512569">
+      <screen x="0" y="25" width="1680" height="993" />
+    </state>
+    <state width="1659" height="213" key="GridCell.Tab.0.left/-130.-1055.1920.1055/0.25.1680.993@-130.-1055.1920.1055" timestamp="1637159754306" />
+    <state width="1659" height="160" key="GridCell.Tab.0.left/0.25.1680.993@0.25.1680.993" timestamp="1637229175974" />
+    <state width="1659" height="160" key="GridCell.Tab.0.left/1680.25.1680.1025/0.25.1680.993@0.25.1680.993" timestamp="1637766512569" />
+    <state width="1659" height="160" key="GridCell.Tab.0.left/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637189642486" />
+    <state width="1659" height="338" key="GridCell.Tab.0.left/1680.25.1680.993/0.25.1680.1025@1680.25.1680.993" timestamp="1637094576676" />
+    <state width="1659" height="160" key="GridCell.Tab.0.right" timestamp="1637766512570">
+      <screen x="0" y="25" width="1680" height="993" />
+    </state>
+    <state width="1659" height="213" key="GridCell.Tab.0.right/-130.-1055.1920.1055/0.25.1680.993@-130.-1055.1920.1055" timestamp="1637159754307" />
+    <state width="1659" height="160" key="GridCell.Tab.0.right/0.25.1680.993@0.25.1680.993" timestamp="1637229175975" />
+    <state width="1659" height="160" key="GridCell.Tab.0.right/1680.25.1680.1025/0.25.1680.993@0.25.1680.993" timestamp="1637766512570" />
+    <state width="1659" height="160" key="GridCell.Tab.0.right/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637189642487" />
+    <state width="1659" height="338" key="GridCell.Tab.0.right/1680.25.1680.993/0.25.1680.1025@1680.25.1680.993" timestamp="1637094576677" />
+    <state x="2029" y="173" key="SettingsEditor" timestamp="1637057445665">
+      <screen x="1680" y="25" width="1680" height="1025" />
+    </state>
+    <state x="2029" y="173" key="SettingsEditor/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637057445665" />
+    <state x="519" y="355" key="com.intellij.ide.util.TipDialog" timestamp="1637766170928">
+      <screen x="0" y="25" width="1680" height="993" />
+    </state>
+    <state x="519" y="355" key="com.intellij.ide.util.TipDialog/0.25.1680.993@0.25.1680.993" timestamp="1637229451205" />
+    <state x="519" y="355" key="com.intellij.ide.util.TipDialog/1680.25.1680.1025/0.25.1680.993@0.25.1680.993" timestamp="1637766170928" />
+    <state x="2199" y="366" key="com.intellij.ide.util.TipDialog/1680.25.1680.1025/0.25.1680.993@1680.25.1680.1025" timestamp="1637086128924" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/GERvaderModule.py</url>
+          <line>42</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
