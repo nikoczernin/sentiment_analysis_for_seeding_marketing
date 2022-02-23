@@ -1,0 +1,72 @@
+---
+title: "03_GerVader2"
+output: html_notebook
+---
+
+# Ausführung von *GerVADER2*, der adaptierten Version von *GerVADER*
+
+```{r}
+if (!require(readr)) {install.packages(readr)}; library(readr)
+if (!require("tidytext")) {install.packages("tidytext")}; library("tidytext")
+if (!require("textdata")) {install.packages("textdata")}; library("textdata")
+if (!require("dplyr")) {install.packages("dplyr")}; library("dplyr")
+if (!require("ggplot2")) {install.packages("ggplot2")}; library("ggplot2")
+if (!require("tidyr")) {install.packages("tidyr")}; library("tidyr")
+if (!require("stringr")) {install.packages("stringr")}; library("stringr")
+if (!require("psych")) {install.packages("psych")}; library("psych")
+```
+
+
+
+## Daten vorbereiten
+
+```{r}
+sentencestidy
+```
+
+Es gibt  2,093,119 Sätze im Datensatz. 
+Diese werden in einem TSV gespeichert, um Bearbeitung mit GerVADER2 zu ermöglichen. 
+
+GerVADER2 erwartet 3 Spalten: 
+* id (nicht wichtig)
+* label (nicht wichtig)
+* comment_text (wird analysiert)
+
+```{r}
+comments_for_TSV <- sentencestidy %>% 
+  mutate(
+    label  = paste(project_id, blog_id, comment_id, sep="_"),
+  ) %>% 
+  select(label, comment_text )
+comments_for_TSV
+
+# Speichere die Tidy-Text-Sätze als TSV
+trnd_sentences_tidy.path = "./data/trnd_sentences_tidy.tsv"
+write.table(comments_for_TSV, file=trnd_sentences_tidy.path, quote=FALSE, sep='\t', col.names = FALSE)
+
+```
+
+
+## GerVADER2 ausführen
+
+```{python}
+import pathlib # hiermit kann man einen eigenen Ordner für jede neue Analyse erstellen
+import datetime
+from GerVADER2.vaderSentimentGER import sentimentAll
+
+# Erstelle einen Ordner für die Resultate von GerVADER2
+outDir = datetime.datetime.now().strftime("%d%m%Y_%H%M%S")
+outDir = 'data/GerVADER2/'+ outDir
+pathlib.Path(outDir).mkdir(exist_ok=True)
+
+# Bestimme den Ordnerpfad für die Resultate
+outFileName = "GerVADER2_sentences.tsv"
+outPath = outDir+'/'+ outFileName
+print("Resultate sind im Ordner:", outPath)
+
+# Führe GerVADER2 aus
+inFile = "data/trnd_sentences_tidy.tsv"
+sentimentAll(inFile, outPath)
+
+```
+

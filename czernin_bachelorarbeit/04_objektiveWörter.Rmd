@@ -1,0 +1,301 @@
+---
+title: "04_objektiveWörter"
+output: html_notebook
+---
+
+# Anpassung der Sentimente objektiver Worte
+Objektive Worte haben grundsätzlich ein Sentiment von 0, also neutral.
+Unter der Annahme, dass das Vorkommen in sentimentalen Sätzen für ein per se objektives Wort ein Sentiment impliziert, werden hier laut Hung & Lin (2013) gewichtete Satz-Sentimente auf objektive Worte übertragen. 
+
+```{r}
+if (!require(readr)) {install.packages(readr)}; library(readr)
+if (!require("tidytext")) {install.packages("tidytext")}; library("tidytext")
+if (!require("textdata")) {install.packages("textdata")}; library("textdata")
+if (!require("dplyr")) {install.packages("dplyr")}; library("dplyr")
+if (!require("ggplot2")) {install.packages("ggplot2")}; library("ggplot2")
+if (!require("tidyr")) {install.packages("tidyr")}; library("tidyr")
+if (!require("stringr")) {install.packages("stringr")}; library("stringr")
+if (!require("psych")) {install.packages("psych")}; library("psych")
+```
+
+## Vorbereitung der notwenigen Daten
+Hier werden zunächst die von *GerVADER2* errechneten, nicht normalisierten Ergebnisse geladen.
+
+### Ordner der Ergebnisse erfassen
+```{r}
+# lade die jüngsten Resultate
+# diese sind im letzten Ordner aller Ordner im Ergebnisse-Ordner
+lastResultDir <- list.dirs(path = "./data/GerVADER2", full.names = TRUE, recursive = FALSE) %>%
+  tail(1)
+lastResultDir
+list.files(lastResultDir)
+```
+
+### Laden der Ergebnisdaten
+die folgenden Spalten werden von GerVADER2 ausgegeben
+* comment_text -> Kommentar-Fließtext (hier für einen Satz jeweils)
+* id -> project_id, blog_id, comment_id (getrennt durch "_")
+* compound -> summierter Sentimentwert
+* scores -> Summe jeweils positiver, neutraler und negativer Sentimente
+
+```{r}
+# erstelle ein leerers DataFrame
+GerVader2_sentences <- data.frame(row.names = c("comment_text", "id", "compound", "scores"))
+# iteriere durch alle Ergebnisfiles (ist idR nur 1)
+for (file in list.files(lastResultDir)) {
+  GerVaderResult = read_delim(file = paste(lastResultDir, '/', file,  sep=''), delim = '\t')
+  # Spalten umbenennen
+  colnames(GerVaderResult) <-  c("comment_text", "id", "compound", "scores")
+  # vereine die Ergebnisse mit dem Dataframe für alle Sätze
+  GerVader2_sentences <- rbind(GerVader2_sentences, GerVaderResult)
+}
+
+GerVader2_sentences <- GerVader2_sentences %>% 
+  distinct(id, .keep_all = TRUE) %>%  # lösche Duplikate
+  # die id-Spalte trennt project_id, blog_id und comment_id durch Unterstriche
+  # trenne diese, um wieder jeweils eine Spalte zu haben
+  separate(id, sep="_", into=c("project_id", "blog_id", "comment_id")) %>% 
+  separate(scores, sep=",", c("neg", "neu", "pos")) %>% 
+  separate(neg, sep=":", c(NA, "neg")) %>% 
+  separate(neu, sep=":", c(NA, "neu")) %>% 
+  separate(pos, sep=":", c(NA, "pos")) %>% 
+  # die Ids sind noch strings, die Sentimentwerte auch
+  # diese werden alle zu Numerics mutiert
+  mutate(
+    wordCount = str_count(comment_text),
+    neg = as.numeric(neg),
+    neu = as.numeric(neu),
+    pos = as.numeric(pos),
+    project_id = as.numeric(project_id),
+    blog_id = as.numeric(blog_id),
+    comment_id = as.numeric(comment_id),
+  )  %>% 
+  # mittels Left-Inner-Join werden alle Reihen diese Dataframes 
+  # … mit den passenden Reihen eines anderen verbunden
+  # die errechneten Sentimentwerte werden nun mit den anderen Metadaten zusammengeführt
+  left_join(x=sentencestidy, by=c("project_id", "blog_id", "comment_id", "comment_text")) %>% 
+  # erstelle eine Satz-Id-Spalte (Reichennummerierung)
+  mutate(sentence_id = row_number()) %>% 
+  # ändere die Reihenfolge der Spalten
+  select(project_id, blog_id, comment_id, sentence_id, everything())
+
+# um spätere Bearbeitungen möglich zu machen, werden nicht-erkannte Sentimente (NA)
+# durch 0 ersetzt
+GerVader2_sentences$compound <- GerVader2_sentences$compound %>% replace_na(0)
+
+
+GerVader2_sentences
+
+```
+
+Das Format gleicht nun dem vom Ende von Schritt 2, jede Zeile repräsentiert einen Sitz in einem Kommentar. Zusätzlich sind nun der insgesamte Sentimentwert (compound) und die jeweiligen Werte der positiven, neutralen und negativen Sentimente annotiert.
+
+
+
+### Sentiment-Lexikon 
+Um die Daten nach neutralen Wörtern zu filtern, muss das Sentiment-Lexikon von *GerVADER2* geladen werden. 
+
+
+```{r}
+# Sentiment-Lexikon laden
+lexicon_path = "./GERVADER2/GERVaderLexicon.txt"
+
+GerVader2_lexicon <- read.delim2(
+  file=lexicon_path,
+  header = FALSE,
+  col.names = c("word", "valence", "x", "y")
+) %>% 
+  select(!c(x, y))
+GerVader2_lexicon
+```
+
+
+### Objektiver Wörter als Tidy-Datenformat
+Um objektiver Wörter bearbeiten zu können, brauchen wir einen Datensatz mit je einem Wort pro Zeile, ein Tidy-Datenformat. 
+
+Im nächsten Schritt wird zunächst ein Array an Stoppwärtern geladen. Diese sind auch hierfür nicht von Bedeutung, da sie inhaltlich nicht relevant für Sentimente sind.
+
+Weiters werden die Sätze pro Reihe in Wörter pro Reihe umgewandelt. Als nächstes werden alle Stoppwörter und Sentiment-Wörter, d.h. Wörter, die im Sentiment-Lexikon vorkommen, mittels Anti-Join entfernt.
+
+```{r}
+# Stoppwörter entfernen
+stopwords_de <- data.frame(stopword=stopwords::stopwords("de"))
+
+objWordsTidy <- GerVader2_sentences %>%
+  select(project_id, blog_id, comment_id, sentence_id, comment_text, compound, neg, pos) %>% 
+  # erstelle ein Tidy-Datenformat -> ein Wort pro Reihe
+  unnest_tokens_(output="word", input="comment_text", to_lower = TRUE) %>% 
+  # entferne alle Reihen mit Sentiment-Wörtern aus dem GerVADER2-Sentiment-Lexikon
+  anti_join(GerVader2_lexicon, by="word") %>% 
+  # entferne Reihen mit Stoppwörtern
+  anti_join(stopwords_de, by=c("word"="stopword"))
+  
+objWordsTidy
+```
+
+
+
+
+## Vorkommnisse objektiver Worte
+Im nächsten Schritt werden die Vorkommnisse jedes objektiven Wortes in jeweils positiven, neutralen und negativen Sätzen gezählt. Je häufiger ein Wort in zB positiven Sätzen vorkommt, desto positiver soll die Konnotation des Wortes sein.
+
+Es sollen hierbei aber nur die Sätze mitgezhählt werden, deren normalisierte Sentimentintensität einen gewissen Schwellenwert übertritt. Dieser wurde bei 0.6 für positive und 0.6 für negative Sätze festgelegt. 
+
+
+```{r}
+# das ist die von GerVADER verwendete Normalisiserungsfunktion
+normalizeScore <- function(score, alpha=40){
+  score_norm = score / sqrt(score ^ 2 + alpha)
+  if (score_norm > 1){score_norm=1}
+  if (score_norm <= -1){score_norm=-1}
+  return (score_norm)
+}
+```
+
+
+
+```{r}
+minimumSentenceIntensity = 0.6
+objWordsTidyFreq <- objWordsTidy %>% 
+  # filtere Sätze mit Sentimenten schwächer als dem festgelegten Schwellenwert raus
+  filter(abs(normalizeScore(compound)) > minimumSentenceIntensity) %>% 
+  group_by(word) %>% 
+  # errechne die absoluten Vorkommnisse der Wörter in Sentimentsätzen
+  summarise(
+     # Vorkommnisse in …
+    fr_pos = sum(compound>0), # positiven Sätzen
+    fr_neg = sum(compound<0), # negativen Sätzen
+    fr_obj = sum(compound==0), # neutralen Sätzen
+    fr_total = n()
+  ) %>% 
+  # entferne Wörter die nur 1 mal vorkommen
+  filter((fr_total > 1))
+
+objWordsTidyFreq
+```
+
+
+# Sentiment-Tendenzen
+
+Nun wird errechnet, ob die objektiven Wörter jeweils eine positive oder negative Tendenz haben.  Dann werden die Wörter herausgefiltert, deren Sentiment-Tendenz nicht stark genug ist um einen signifikanten Einfluss auf ihre Sätze zu haben. 
+
+Aufgrund der ungleichen Verteilung der postiven, negativen und neutralen Sätze, werden die relativen Frequenzen der Wörter in Sentimentsätzen um das ungleiche Verhältnis der Sentimentsätze korrigiert. 
+
+Die Sentiment-Tendenz eines Wortes ist die Wahrscheinlichkeit eines Wortes, es in entweder positiven oder negativen Sentimentsätzen zu finden, je nachdem, welche der beiden größer ist.
+Kommt ein Wort also in mehr positiven als negativen Sätzen vor, angenommen es gibt gleich viele positive und negative Sätze, wird vermutet, dass das Wort eine positive Tendenz hat.
+
+Es sollen hierbei ebenfalls nur Worte berücksichtigt werden, deren Sentiment-Tendenz-Intensität einen gewissen Schwellenwert übertritt. Dieser wurde bei 0.5 Sätze festgelegt. 
+
+
+```{r}
+# Anzahl positiver Sätze im Korpus
+n_pos = GerVader2_sentences %>% 
+  filter(compound>0) %>% 
+  nrow
+# Anzahl negativer Sätze im Korpus
+n_neg = GerVader2_sentences %>% 
+  filter(compound<0) %>% 
+  nrow
+# Anzahl neutraler Sätze im Korpus
+n_obj = GerVader2_sentences %>% 
+  filter(compound==0) %>% 
+  nrow
+# Anzahl an Sätzen
+n = n_pos + n_neg + n_obj
+n
+
+# setze einen Schwellenwert für Sentiment-Tendenzen
+minimumSentimentTendency = 0.5
+
+# erstelle ein Lexikon mit objektiven Worten
+# jedes Wort hat hier die jeweilige Sentiment-Tendenz annotiert
+obsWordsLexicon <- objWordsTidyFreq %>% 
+  # filtere nicht-alphabetische Wörter heraus (zb "-----------" oder Zahlen)
+  filter(str_detect(word, "^[a-zA-Z]+$")) %>% 
+  # errechne die Wahrscheinlichkeit, 
+  # ein Wort in jeweils positiven, negativen oder neutralen Sätzen zu finden
+  mutate(
+    p_pos = (fr_pos/fr_total),
+    p_neg = (fr_neg/fr_total),
+    p_obj = (fr_obj/fr_total),
+    # um die ungleiche Verteilung von positiven, negativen und neutralen Sätzen auszugleichen
+    # werden die Wahrscheinlichkeiten um die ungleichen Verhältnisse korrigiert
+    p_pos_scaled = p_pos / (n_pos / n),
+    p_neg_scaled = p_neg / (n_neg / n),
+    p_obj_scaled = p_obj / (n_obj / n),
+  ) %>% 
+  # die maximale Wahrscheinlichkeit, in einem Sentiment-Satz vorzukommen
+  # bestimmt die Tendenz-Polarität des Wortes
+  mutate(
+    tendency = if_else(
+      p_pos_scaled >= p_neg_scaled, p_pos, p_neg*-1
+    )
+  ) %>% 
+  # filtere Tendenzen mit einer Intensität unter einem bestimmten Wert heraus
+  filter(abs(tendency)>minimumSentimentTendency) %>% 
+  arrange(tendency) %>% 
+  select(word, tendency)
+
+obsWordsLexicon
+
+```
+
+
+jetzt müssen die Sentimentwerte der objektiven Wörter den Sentimentwerten der Sätze, die sie enthalten, hinzuaddiert werden
+
+Die geschätzten Sentimente, die objektive Worte durch ihre Sentiment-Tendenz haben, werden errechnet, indem positive Tendenz-Intensitäten mit den durchschnittlichen positiven Sentimenten ihrer Sätze und negative Tendenz-Intensitäten mit den durchschnittlichen negativen Sentimenten ihrer Sätze multipliziert werden.
+
+Schließlich werden die geschätzten Sentimente der objektiven Wörter summiert und den bestehenden, noch nicht normalisierten Sentiment-Summen hinzuaddiert.
+
+```{r}
+sentence_extra_sentiments <- objWordsTidy %>% 
+  group_by(word) %>% 
+  # errechne pro objektivem Wort die durchschnittlichen Sentimente aller Sätze
+  summarise(
+    pos = mean(pos, na.rm=TRUE),
+    neg = mean(neg, na.rm=TRUE)
+  ) %>% 
+  # vereine die Daten mit dem ObjWort-Tendenz-Lexiken
+  inner_join(obsWordsLexicon) %>%
+  # ist die Tendenz positiv, so ist das gewichtete Sentiment gleich der Tendenz
+  # multipliziert mit dem positiven Sentiment-Mittelwert aller Sätze
+  # in denen es vorkommt & vice versa für negative Tendenzen und Sätze
+  mutate(weighted_sentiment = if_else(
+    tendency > 0, tendency * pos, tendency * neg
+    )) %>% 
+  select(word, weighted_sentiment) %>% 
+  inner_join(objWordsTidy, by="word") %>%
+  # nun gruppiere die Daten nach Sätzen um Extra-Sentimente 
+  # durch objektive Wörter zu errechnen
+  group_by(sentence_id) %>% 
+  summarise(
+    extra_sentiment = sum(weighted_sentiment)
+  )
+sentence_extra_sentiments
+
+```
+
+```{r}
+GerVader2_sentences <- GerVader2_sentences %>%
+  # vereine die Ergebnisse von GerVADER2 
+  # mit den Daten der Extra-Sentimente durch objektive Wörter
+  inner_join(sentence_extra_sentiments) %>% 
+  mutate(
+    compound_alt = compound, # behalte die ursprünglichen GerVADER2-Sentimente
+    # addiere die GerVADER2-Sentimente und die Extra-Sentimente
+    compound = compound_alt + extra_sentiment
+    ) %>% 
+  select(!extra_sentiment, neg, neu, pos)
+GerVader2_sentences
+
+```
+
+## Speichern der Ergebnisse
+```{r}
+filePath = "./data/GerVader2_adjusted_sentences.tsv"
+write_tsv(GerVader2_sentences, file=filePath)
+```
+
+
+## Quellen:
+Hung, Chihli, und Hao-Kai Lin. 2013. *„Using Objective Words in SentiWordNet to Improve Word-of-Mouth Sentiment Classification.“* Intelligent Systems, Vol. 28(2): 47-54.

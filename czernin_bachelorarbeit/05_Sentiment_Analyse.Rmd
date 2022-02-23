@@ -1,0 +1,722 @@
+---
+title: "06_GerVADER2_Analyse"
+output: html_notebook
+---
+
+# Analyse der Sentimente
+Nachdem *GerVADER2* die Sentimente aller Sätze im Korpus erkannt und wir im vorherigen Schritt alle objektiven Wörter auf Sentiment-Tendenzen untersucht haben, können die annotierten Sentiment-Werte nun auf höhere Ebenen (von Sätze zu Kommentaren, Blogs und Kampagnen) akkumuliert werden.
+
+```{r}
+if (!require(readr)) {install.packages(readr)}; library(readr)
+if (!require("tidytext")) {install.packages("tidytext")}; library("tidytext")
+if (!require("textdata")) {install.packages("textdata")}; library("textdata")
+if (!require("dplyr")) {install.packages("dplyr")}; library("dplyr")
+if (!require("ggplot2")) {install.packages("ggplot2")}; library("ggplot2")
+if (!require("tidyr")) {install.packages("tidyr")}; library("tidyr")
+if (!require("stringr")) {install.packages("stringr")}; library("stringr")
+if (!require("psych")) {install.packages("psych")}; library("psych")
+if (!require("glue")) {install.packages("glue")}; library("glue")
+```
+
+
+
+
+
+
+
+## Laden der Daten
+```{r}
+filePath = "./data/GerVader2_adjusted_sentences.tsv"
+GerVader2_sentences <-  read_tsv(file = filePath)
+GerVader2_sentences
+```
+
+
+
+## Normalisierung der Daten
+Hier wird eine Funktion verwendet, die die Daten in Werte zwischen -1 und 1 skaliert. Zusätzlich wird ein Alpha-Wert verwendet, der die Verteilung der Werte optisch verständlicher macht. Je höher Alpha, desto stärker werden die Unterschiede zwischen den stärkeren Sentimenten erkennbar.
+
+```{r}
+# das ist die von GerVADER verwendete Normalisiserungsfunktion
+normalizeScore <- function(score, alpha=30){
+  score_norm = score / sqrt(score ^ 2 + alpha)
+  if (score_norm > 1){score_norm=1}
+  if (score_norm <= -1){score_norm=-1}
+  return (score_norm)
+}
+```
+
+
+## Sentimente pro Kommentar
+### Akkumulieren der Satz-Sentimente
+```{r}
+alpha = 40
+
+# starte mit Sentimente pro Satz
+GerVader2_comments_nn <- GerVader2_sentences %>% 
+  select(!c(neg, neu, pos)) %>% 
+  group_by(project_id, blog_id, comment_id, is_moderator) %>% 
+  # füge die Texte der Sätze zu Kommentaren zusammen
+  mutate(
+    comment_text = Reduce(f=paste, x=comment_text),
+    ) %>% 
+  group_by(project_id, blog_id, comment_id, is_moderator, comment_text) %>% 
+  # errechne die Sentimentsummen der Kommentare und die Wortanzahl
+  summarize(
+    compound_alt = sum(compound_alt, na.rm=TRUE),
+    compound = sum(compound, na.rm=TRUE),
+    wordCount = sum(wordCount, na.rm=TRUE)
+  )  
+
+GerVader2_comments <- GerVader2_comments_nn %>% 
+  # normalisiere die Sentimentsummen mit einem gegebenen Alphawert
+  mutate(
+    compound_alt = normalizeScore(compound_alt, alpha),
+    compound = normalizeScore(compound, alpha)
+    ) %>% 
+  # lade the Metadaten der Kommentare
+inner_join(comments %>% select(project_id, blog_id, comment_id, comment_author))
+  
+GerVader2_comments
+```
+
+
+### Verteilung und Dichte der Kommentare 
+In den folgenden Plots werden die Verteilung und Dichte der Sentimente der Kommentare, jeweils vor und nach der Berücksichtigung der Sentiment-Tendenzen objektiver Worte, gezeigt.
+
+```{r}
+# Verteilung der Sentiment-Kommentare vor Berücksichtigung der Tendenzen objektiver Worte
+GerVader2_comments$compound_alt %>% hist(breaks=60, main="Verteilung Kommentare-Sentiment vor objektive Worten")
+# Verteilung der Sentiment-Kommentare nach Berücksichtigung der Tend enzen objektiver Worte
+GerVader2_comments$compound %>% hist(breaks=60, main="Verteilung Kommentare-Sentiment nach objektive Worten")
+
+# Dichtefunktion der Sentiment-Kommentare
+plot(density(GerVader2_comments$compound_alt), main="Dichtefunktion Kommentar-Sentimente")
+lines(density(GerVader2_comments$compound), col=2, lty=2, lwd=3)
+
+```
+Hier wird erneut die Verteilung der Kommentar-Sentimente gezeigt. Die rote, strichlierte Linie markiert den Sentiment-Mittelwert. Dieser liegt bei 0,478.
+
+Ebenso werden hier die Kommentardaten nach rein positiven, negativen und neutralen Kommentaren gefiltert. Somit zeigt sich, dass 750.230 positive, 18.426 negative und, danke Schritt 4, keine neutralen Kommentare erkannt wurden. 
+
+```{r}
+GerVader2_comments %>% 
+  ggplot(aes(x=compound)) +
+  geom_histogram(binwidth=0.05) +
+  geom_vline(aes(xintercept=mean(compound)), linetype="dashed", color = "red") +
+  ggtitle("Sentiment-Verteilung der Kommentare") +
+  labs(x="Sentimentwert", "Menge")
+
+mean(GerVader2_comments$compound)
+
+GerVader2_comments %>% 
+  filter(compound > 0)
+GerVader2_comments %>% 
+  filter(compound < 0)
+GerVader2_comments %>% 
+  filter(compound == 0)
+```
+
+
+### Wortanzahl der Kommentare
+Hier wird gezeigt, dass es eine signifikante, positive Korrelation zwischen der Länge eines Kommentars und dem Sentiment gibt.
+
+```{r}
+# Korrelation zwischen Sentiment und Wortanzahl
+cor.test(GerVader2_comments$wordCount, GerVader2_comments$compound)
+"Statistiken der Wortanzahlen"
+summary(GerVader2_comments$wordCount)
+```
+
+Es gibt eine schwache, signifikante, positive Korrelation von 0,26 zwischen den erkannten Sentimenten von Kommentaren und ihrer Länge.
+
+
+### Visualisierung von Alpha
+Der Effekt des Normalisierungsparameters Alpha wird im folgenden visualisiert. 
+Bei kleinem Alpha ist die starke Tendenz zu sehr positiven Kommentaren sichtbar, Unterschiede zwischen den positiven Kommentaren sind schwerer erkennbar. Durch ein größeres Alpha werden die Abstände zwischen den sehr positiven Kommentaren scheinbar größer.
+
+```{r}
+alpha_1 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 1))%>% mutate(alpha = 1)
+alpha_15 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 15))%>% mutate(alpha = 15)
+alpha_40 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 40))%>% mutate(alpha = 40)
+alpha_90 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 90))%>% mutate(alpha = 90)
+alpha_200 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 200))%>% mutate(alpha = 200)
+alpha_30 <- GerVader2_comments_nn$compound %>% 
+  as.data.frame() %>% 
+  mutate(compound = normalizeScore(., 30))%>% mutate(alpha = 30)
+
+alpha_scores <- rbind(alpha_1, alpha_15, alpha_30, alpha_40, alpha_90, alpha_200 )
+
+alpha_scores %>% 
+  ggplot( aes(x=compound, color=alpha, fill=alpha)) +
+    geom_histogram(alpha=.7, binwidth = 0.05) +
+    facet_wrap(~alpha) +
+    ggtitle("Sentimentverteilung der Kommentare für Alpha-Werte") +
+    xlab("Sentiment") + ylab("")
+
+```
+
+
+### Normalverteilung der Kommentar-Sentimente
+Die folgenden Shapiro-Wilk-Tests ergeben, dass die Kommentar-Sentimente weder vor noch nach der Berücksichtigung der Sentiment-Tendenzen der objektiven Worte annähernd normalverteilt ist.
+
+```{r}
+shapiro.test(GerVader2_comments$compound %>% sample(5000))
+shapiro.test(GerVader2_comments$compound_alt %>% sample(5000))
+```
+
+
+
+
+## Sentimente pro Blogeintrag
+
+Hier werden die durchschnittlichen Sentimente der Kommentare pro Blog errechnet. 
+
+```{r}
+GerVader_per_blog <- GerVader2_comments %>% 
+  # lade die Metadaten der Blogeinträge
+  inner_join(blogs, by=c("project_id", "blog_id")) %>% 
+  group_by(project_id, blog_id, author, n_comments) %>% 
+  # errechne die Sentiment-Mittelwerte pro blog_id
+  summarize(
+    SentimentMean = mean(compound, na.rm = TRUE),
+    SentimentMean_alt = mean(compound_alt, na.rm = TRUE),
+  ) %>% 
+  # lade die Kampagnen-Metadaten (Teilnehmeranzahl)
+  inner_join(projects %>% select(project_id, participants), by=c("project_id"))
+
+
+GerVader_per_blog
+```
+
+### Verteilung der Blogeintrag-Sentimente
+
+Hier wird die Verteilung der der Blogeintrag-Sentimente visualisiert und auf Normalverteilung getestet. Das durchschnittlich Sentiment der Blogeintrag-Kommentare beträgt 0,493. 
+
+Der Shapiro-Wilk-Test weist nach, dass die Blogeintrag-Sentimente nicht annähernd normalverteilt sind. 
+
+```{r}
+# Verteilung der Blogeintrag-Sentimente
+GerVader_per_blog %>% 
+  ggplot(aes(x=SentimentMean)) +
+  geom_histogram(binwidth=0.01) +
+  geom_vline(aes(xintercept=mean(SentimentMean)), linetype="dashed", color = "red") +
+  ggtitle("Sentiment-Verteilung der Blogeinträge") +
+  labs(x="Sentimentwert", "Menge")
+
+# Teste die Verteilung der Blogeintrag-Sentimente auf Normalverteilung
+shapiro.test(GerVader_per_blog$SentimentMean)
+
+"Mittelwert der durhcschnittlichen Blogeintrag-Sentimente"
+mean(GerVader_per_blog$SentimentMean)
+```
+
+
+
+
+
+## Sentimente pro Kampagne (Projekt)
+
+Auch für die Analyse der Kampagnen werden die Sentimente der Kommentare nach Kampagnen gruppiert und ihr Mittelwert berechnet.
+
+```{r}
+GerVader_per_project <- GerVader2_comments %>% 
+  group_by(project_id) %>% 
+  summarize(
+    # errechne die Sentimentsumme und den Sentimentdurchschnitt
+    SentimenSum = sum(compound),
+    SentimentMean = mean(compound, na.rm = TRUE),
+    SentimentMean_alt = mean(compound_alt, na.rm = TRUE),
+    # errechne die Wortanzahl der Kommentare der Kampagne
+    wordCount = sum(wordCount),
+    # errechne die Anzahl an Kommentaren in einer Kampagne
+    commentCount = n()
+    ) %>% 
+  # lade die Metadaten der Kampagnen, Kampagnenergebnisse und Blogeinträge
+  inner_join(projects, by="project_id") %>% 
+  inner_join(results, by="project_id") %>% 
+  left_join(
+    blogs %>% group_by(project_id, author) %>% summarize(n=n()) %>% select(project_id, author),
+    by="project_id"
+    ) %>% 
+  left_join(
+    blogs %>% group_by(project_id) %>% summarize(blogCount=n()) %>% select(project_id, blogCount), 
+    by="project_id"
+    ) %>% 
+  # errechne die durchschnittliche Anzahl an Kommentaren pro Kampagnenteilnehmer
+  # nenne das Ergebnis "engagement"
+  mutate(engagement = commentCount / participants)
+
+# errechne die Laufzeit des Projekts
+getRuntime <- function(start,end){
+  start = strsplit(start, "[.]")
+  start_day = (start[[1]][1]) %>% as.numeric() 
+  start_month = (start[[1]][2]) %>% as.numeric() 
+  start_year = (start[[1]][3]) %>% as.numeric() 
+  end = strsplit(end, "[.]")
+  end_day = (end[[1]][1]) %>% as.numeric() 
+  end_month = (end[[1]][2]) %>% as.numeric() 
+  end_year = (end[[1]][3]) %>% as.numeric() 
+  return ((end_day+end_month*30+end_year*365)-(start_day+start_month*30+start_year*365))
+}
+GerVader_per_project$runtime = mapply(getRuntime, GerVader_per_project$start_date, GerVader_per_project$end_date)
+
+GerVader_per_project
+summary(GerVader_per_project)
+```
+
+### Verteilung der Kampagnen-Sentimente
+Hier werden die Verteilung der Kampagnen-Sentimente visualisiert und auf Normalverteilung getestet. Die Kampagnen haben im Schnitt durchschnittliche Kommentar-Sentimente von 0,483. 
+
+Der Shapiro-Wilk-Test ergibt, dass die durchschnittlichen Kommentar-Sentimente pro Kampagne annähernd normalverteilt sind.
+
+```{r}
+GerVader_per_project %>% 
+  ggplot(aes(x=SentimentMean)) +
+  geom_histogram(binwidth=0.005) +
+  geom_vline(aes(xintercept=mean(SentimentMean)), linetype="dashed", color = "red") +
+  ggtitle("Sentiment-Verteilung der Projekte") +
+  labs(x="Sentimentwert", "Menge")
+
+"Durchschnittliche Kampagnen-Sentimente"
+mean(GerVader_per_project$SentimentMean)
+
+"Negativster Kampagnen-Sentiment-Mittelwert"
+min(GerVader_per_project$SentimentMean)
+
+# Teste die Kampagnen-Sentimente auf Normalverteilung
+shapiro.test(GerVader_per_project$SentimentMean)
+```
+
+
+
+### Korrelationen zwischen Kampagneneigenschaften und ihren Ergebnissen
+
+Im folgenden werden die Ergebnisse der Kampagnen, also der erkannten Sentiment, den durchschnittlichen Kundenbewertungen und den durchschnittlichen Weiterempfehlungsquoten, auf Korrelation miteinander und mit anderen Variablen, nämlich der Anzahl an Blgoeinträgen und Teilnehmern pro Kampagne, der Laufzeit jeder Kampagne und dem Engagement, dass die Teilnehmer im Schnitt zeigten. 
+
+```{r}
+GerVader_per_project %>% 
+  select(
+    SentimentMean, 
+    weiterempfehlungsquote, 
+    rating_value, 
+    blogCount,
+    participants,
+    runtime,
+    engagement
+    ) %>% 
+  pairs.panels()
+```
+
+Im folgenden werden die entdeckten Korrelationen auf Signifikanz getestet.
+
+Es gibt ein signifikante, wenn auch nicht starke, Korrelation zwischen den durch GerVader2 erkannten, durchschnittlichen Sentimenten der Projekte und ihren Weiterempfehlungsraten (0,20) und Bewertungen (0,33).
+
+Ebenso gibt es eine signifikante, schwach negative Korrelation (-0,24) zwischen dem Sentiment der Kommentare pro Kampagne und der Anzahl an Blogeinträgen über die Kampagnenlaufzeit. 
+
+
+```{r}
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$weiterempfehlungsquote)
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$rating_value)
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$blogCount)
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$participants)
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$runtime)
+cor.test(GerVader_per_project$SentimentMean, GerVader_per_project$engagement)
+```
+
+Nun werden die angeblich signifikanten Korrelationen genauer visualisiert.
+
+```{r}
+GerVader_per_project %>% 
+  ggplot(aes(weiterempfehlungsquote, SentimentMean)) +
+  geom_jitter() +
+  ggtitle("Korrelation zwischen Sentiment pro Projekt und Weiterempfehlungsrate")+
+  ylab("durchschn. Sentiment pro Projekt") + xlab("durchschn. Weiterempfehlungsrate")
+  
+GerVader_per_project %>% 
+  ggplot(aes(rating_value, SentimentMean)) +
+  geom_jitter() +
+  ggtitle("Korrelation zwischen Sentiment pro Projekt und  Kundenbewertung")+
+  ylab("durchschn. Sentiment pro Projekt") + xlab("durchschn. Kundenbewertung")
+  
+GerVader_per_project %>% 
+  ggplot(aes(blogCount, SentimentMean)) +
+  geom_jitter() +
+  ggtitle("Korrelation zwischen Sentiment pro Projekt und Anzahl an Blogeinträgen")+
+  ylab("durchschn. Sentiment pro Projekt") + xlab("Blogeinträge")
+```
+
+
+
+
+
+
+
+## Kampagnenresultate pro Domäne (category)
+Im folgenden werden pro Domäne die durchschnittlichen Sentimente, Teilnehmerbewertungen, Weiterempfehlungsquoten und die Varianz der Sentimente berechnet.
+```{r}
+"Domänen der Kampagnen"
+projects$category %>% unique()
+
+GerVader2_per_category <- GerVader2_comments %>% 
+  # lade Metadaten der Kampagnen und ihrer Ergebnisse
+  inner_join(projects, by="project_id") %>% 
+  inner_join(results, by="project_id") %>% 
+  group_by(category) %>% 
+  # Statistikenpro Domäne
+   summarize(
+     # Sentiment-Mittelwert
+    SentimentMean = mean(compound, na.rm = TRUE),
+    # Kommentaranzahl
+    comment_count = n(),
+    # durchschnittliche Teilnehmerbewertung
+    RatingMean = mean(rating_value, na.rm=TRUE),
+    # durchschnittliche Weiterempfehlungsrate
+    WeiterempfehlungsquoteMean = mean(weiterempfehlungsquote, na.rm=TRUE),
+    # Varianz der Sentimente
+    variance = var(compound, na.rm=TRUE)
+    ) %>% 
+  arrange(desc(SentimentMean))
+
+GerVader2_per_category
+GerVader2_per_category$SentimentMean %>% barplot(legend=GerVader2_per_category$category)
+
+```
+
+
+
+
+
+
+## Analyse der Kampagnenmanager
+
+Hier wird das jeweilige Engagement der Teilnehmer pro Kampagnenmanager gezeigt. 
+
+```{r}
+GerVader_per_project %>% 
+  select(project_id, author, engagement) %>% 
+  arrange(desc(engagement))
+```
+
+Hier wird ein Datensatz mit den durchschnittlichen Kommentar-Sentimenten, Teilnehmerbewertungen und Weiterempfehlungsquoten pro Kampagnenmanager, sowie der Anzahl verwalteter Kampagnen und dem angeregten Engagement, also der durchschnittlichen Anzahl an Kommentaren, errechnet.
+
+```{r}
+GerVader_projects_per_author <- GerVader_per_project %>% 
+  group_by(author) %>% 
+  summarise(
+    SentimentMean = mean(SentimentMean, na.rm = TRUE),
+    weiterempfehlungsquote = mean(weiterempfehlungsquote, na.rm = TRUE),
+    rating_value = mean(rating_value, na.rm = TRUE),
+    n_projects = n(),
+    engagement = mean(commentCount / participants, na.rm = TRUE)
+  ) %>% 
+  arrange(desc(SentimentMean))
+GerVader_projects_per_author
+```
+
+### Korrelationen der Ergebnisse pro Kampagnenmanager
+Hier werden die Erfolgsmetriken pro Kampagnenmanager auf Korrelationen untersucht.
+
+```{r}
+GerVader_projects_per_author %>% 
+  select(
+    SentimentMean, 
+    weiterempfehlungsquote, 
+    rating_value, 
+    n_projects,
+    engagement
+    ) %>% 
+  pairs.panels()
+```
+Die Korrelationen sind allesamt nicht signifikant. Das könnte auch daran liegen, dass nur sehr wenige verschiedene Kampagnenmanager in den Daten vorliegen, vielleicht ergeben sich im großen Ganzen signifikantere Trends.
+
+```{r}
+cor.test(GerVader_projects_per_author$SentimentMean, GerVader_projects_per_author$weiterempfehlungsquote)
+cor.test(GerVader_projects_per_author$SentimentMean, GerVader_projects_per_author$rating_value)
+cor.test(GerVader_projects_per_author$SentimentMean, GerVader_projects_per_author$n_projects)
+cor.test(GerVader_projects_per_author$rating_value, GerVader_projects_per_author$n_projects)
+cor.test(GerVader_projects_per_author$weiterempfehlungsquote, GerVader_projects_per_author$engagement)
+```
+
+
+
+
+
+
+
+
+
+
+## Kampagnen-Sentimente über ihre Laufzeit
+Als nächstes werden die Kommentar-Sentimente der Blogeinträge jeder Kampagne visualisiert, um Sentiment-Trends über die Kampagnenentwicklung erkennbar zu machen.
+
+
+```{r}
+# Funktion zur Visualisierung von Sentiment-Entwicklungen einer Kampagne
+
+SentimentEntwicklung <- function(GerVader_per_blog, project_ids=c(1:100000000), showLegend=TRUE, opacity=1, points=TRUE, title="") {
+  GerVader_per_blog %>% 
+    mutate(
+      project_id = factor(project_id),
+    ) %>% 
+    filter(project_id %in% project_ids) %>% 
+    ggplot(aes(blog_id_alt, SentimentMean, color=project_id)) +
+      geom_line(alpha=opacity, show.legend = showLegend) +
+      geom_point(show.legend = showLegend, alpha=points) +
+      ggtitle(glue("Sentiment-Entwicklung für Kampagne(n) {title}")) +
+      xlab("Blog ID") +
+      geom_point() %>% 
+    print()
+}
+```
+
+
+```{r}
+# Kampagne 17
+SentimentEntwicklung(GerVader_per_blog, project_ids=17, title="#17")
+# Alle Kampagnen mit Ids zwischen 1 und 30
+SentimentEntwicklung(GerVader_per_blog,project_ids= c(1:30), TRUE, title="")
+# Alle Kampagnen mit Ids zwischen 1 und 3000
+SentimentEntwicklung(GerVader_per_blog, project_ids=c(1:300), FALSE, 0.2, FALSE)
+```
+
+
+
+
+## Analyse von bestimmten Kampagnenmanagern und ihren Kampagnen
+Hier werden die Kampagnenmanager "lesofy" und insbesondere "nellisa" genauer unter die Lupe genommen.
+```{r}
+
+# Projects for campaign manager lesofy
+SentimentEntwicklung(GerVader_per_blog %>% filter(author=="trinidi"), title="Kampagnenmanager: trinidi")
+# Projects for campaign manager nellisa
+SentimentEntwicklung(GerVader_per_blog %>% filter(author=="nellisa"), title="Kampagnenmanager: nellisa")
+
+```
+
+
+
+
+
+
+### Detailanalyse: Kampagnenmanager "Nellisa" und ihre Kampagne #198
+```{r}
+# Datensatz für nellisa
+nellisa <- GerVader2_comments %>% 
+  inner_join(
+    blogs %>% select(project_id, author), 
+    by="project_id") %>% 
+  distinct() %>% 
+  rename(campaign_manager = author) %>% 
+  filter(campaign_manager == "nellisa")
+
+nellisa
+
+```
+
+Die Kampagne 198 hat, wie oben ersichtlich, ein Sentimenttief bei den ersten Blogeinträgen. Das wird hier genauer untersucht.
+
+
+```{r}
+# Datensatz der Kampagne #198
+nellisa_198 <- GerVader2_comments %>% 
+  filter(project_id == 198)
+
+nellisa_198$compound %>% boxplot(horizontal=TRUE, main="Boxplot Sentimente der Kampagne 198")
+abline(v = mean(GerVader2_comments$compound), col="red", lwd=3, lty=2)
+
+nellisa_198_per_blog <- nellisa_198 %>% 
+  group_by(blog_id) %>% 
+  summarise(
+    SentimentMean = mean(compound),
+    comment_count = n()
+  )
+
+nellisa_198_per_blog %>% 
+  ggplot(aes(x=blog_id, y=SentimentMean, col=comment_count)) +
+  geom_line() + geom_point() +
+  ggtitle("Sentiment-Mittelwert für Kampagne 198") +
+  xlab("Blog ID")
+
+```
+
+#### Vergleiche die Anzahl negativer Kommentare mit dem durchschnittlichen Kommentarsentiment pro Blogeintrag über die Kampagnenentwicklung
+
+Die folgende Grafik zeigt, dass es während dem Tief der durchschnittlichen Sentimente (türkis) der ersten Blogeinträge auch relativ viele negative Kommentare (orange, strichliert) gab.
+
+```{r}
+
+# erstelle einen Datensatz der Anzahl an Kommentaren 
+# deren Sentimente kleiner als 0, also negativ, sind
+nellisa_198_negative <- nellisa_198 %>% 
+  group_by(blog_id) %>% 
+  mutate(
+    SentimentMean=mean(compound, na.rm=TRUE),
+    is_under_min = compound < 0
+    ) %>% 
+  group_by(blog_id, SentimentMean) %>% 
+  summarise( n_negative=sum(is_under_min) ) 
+
+
+ggplot() +
+  geom_line(mapping = aes(x=nellisa_198_per_blog$blog_id, y=nellisa_198_per_blog$SentimentMean), col="cyan3") +
+  geom_line(mapping = aes(x=nellisa_198_negative$blog_id, y=(nellisa_198_negative$n_negative+30)/85), col="darkorange", linetype = "dashed") +
+  scale_y_continuous(name = "SentimentMean",
+                     sec.axis = sec_axis(~.*85-30, name = "Anzahl Ausreißer-Kommentare")) +
+  xlab("Blog ID")  +
+  theme(
+    axis.title.y.left=element_text(color="cyan3"),
+    axis.text.y.left=element_text(color="cyan3"),
+    axis.title.y.right=element_text(color="darkorange"),
+    axis.text.y.right=element_text(color="darkorange")
+  )
+```
+
+#### Vergleiche die Anzahl sehr positiver Kommentare mit dem durchschnittlichen Kommentarsentiment pro Blogeintrag über die Kampagnenentwicklung
+
+Die folgende Grafik zeigt, dass es während dem Tief der durchschnittlichen Sentimente (türkis) auch relativ weniger sehr positive Kommentare (pink, strichliert) gab.
+
+```{r}
+# Unterer Grenzwert des vierten Quartils der Sentimente aller Kampagnen
+(q3 = summary(GerVader2_comments$compound)[5])
+
+
+# erstelle einen Datensatz der Anzahl an Kommentaren 
+# deren Sentimente im vierten Quartil liege, also sehr positiv sind
+nellisa_198_positive <- nellisa_198 %>% 
+  group_by(blog_id) %>% 
+  mutate(
+    SentimentMean=mean(compound, na.rm=TRUE),
+    is_very_positive = compound > q3
+    ) %>% 
+  group_by(blog_id, SentimentMean) %>% 
+  summarise( n_very_positive=sum(is_very_positive) ) 
+
+
+ggplot() +
+  geom_line(mapping = aes(x=nellisa_198_per_blog$blog_id, y=nellisa_198_per_blog$SentimentMean), col="cyan3") +
+  geom_line(mapping = aes(x=nellisa_198_positive$blog_id, y=(nellisa_198_positive$n_very_positive+500)/1500), col="violetred1", linetype = "dashed") +
+  scale_y_continuous(name = "SentimentMean",
+                     sec.axis = sec_axis(~.*1500-500, name = "Anzahl Kommentare Sentiment im vierten Quartil")) +
+  xlab("Blog ID")  +
+  theme(
+    axis.title.y.left=element_text(color="cyan3"),
+    axis.text.y.left=element_text(color="cyan3"),
+    axis.title.y.right=element_text(color="violetred1"),
+    axis.text.y.right=element_text(color="violetred1")
+  )
+  
+  
+ 
+
+```
+Hier werden nun die Anzahl der Kommentare pro Blogeintrag der Kampagne 198 visualisiert. Bei Blogeintrag 7 gibt es besonders viele Kommentare, darum wird mittels Histogramm die Verteilung der Kommentar-Sentimente in Blogeintrag 7 der Kampagne 198 abgebildet.
+
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=nellisa_198_per_blog$blog_id, y=nellisa_198_per_blog$comment_count), col="brown2") +
+  xlab("Blog ID")  +
+  ylab("Anzahl Kommentare")
+
+nellisa_198_1256 <- nellisa_198 %>% filter(blog_id==1256)
+nellisa_198_1256$compound %>% hist(breaks=30, main="Verteilung der Kommentar-Sentimente für Kampagne 198 Blog 7")
+abline(v = q3, col="springgreen4", lwd=2, lty=2)
+```
+
+
+
+
+#### Negative Kommentare in Kampagne 189
+```{r}
+nellisa_198 %>% 
+  arrange((compound)) %>% 
+  select(comment_text, blog_id, compound, comment_author)
+```
+
+## Super-negative Kommentare
+Hier werden ein paar Blogs auf ihre negativsten Kommentare Stichprobenartig untersucht.
+```{r}
+topneg <- GerVader2_comments %>% 
+  filter(blog_id %in% c(2625, 2096, 1158)) %>% 
+  filter(comment_author != "Talia82") %>% 
+  left_join(projects) %>% 
+  filter(category == "Haushalt & Reinigung") %>% 
+  arrange(compound) %>% 
+  distinct() %>% 
+  head(20) %>% 
+  arrange(blog_id)
+
+topneg
+write_tsv(topneg, file="./data/top_negative_kommentare_297.tsv")
+
+```
+
+
+
+
+
+## Kommentar-Sentimente pro Teilnehmer
+Die Teilnehmer nehmen veschieden oft an Kampagnen teil, schreiben verschieden lange und emotion unterschiedlich geladene Texte. Das wird hier untersucht.
+
+```{r}
+GerVader_per_user <- GerVader2_comments %>% 
+  # damit rechtfertige ich diesen ungewöhnlichen Schritt
+  mutate(project_id = 1) %>%
+  # die project_id wird hier zu 1 mutiert, um späteres Summieren zu erleichtern
+  # die count()-Funktion war in diesem Fall etwas "buggy"
+  # Statistiken pro User
+  group_by(comment_author) %>% 
+  summarise(
+    SentimentMean = mean(compound), # Sentiment-Mittelwert
+    comment_count = n(), # Anzahl hinterlassener Kommentare
+    wordCountMean = mean(wordCount), # durchschnittliche Wortanzahl pro Kommentar
+    projectCount = sum(project_id) # Anzahl teilgenommener Kampagnen
+  )
+
+GerVader_per_user
+```
+
+Hier sind ein paar informative Plots zu den Verteilungen der Userkommentare.
+```{r}
+GerVader_per_user$SentimentMean %>% 
+  hist(breaks=50, main="Verteilung der Sentimente pro User")
+
+GerVader_per_user$SentimentMean %>% 
+  boxplot(horizontal=TRUE, main="Boxplot der Sentimente pro User")
+
+
+
+GerVader_per_user$comment_count %>% 
+  boxplot(horizontal=TRUE, main="Boxplot der Kommentare pro User")
+
+
+
+GerVader_per_user$wordCountMean %>% 
+  hist(breaks=50, main="Verteilung der durchschnittlichen Kommentarlänge pro User")
+```
+
+### Genauere Untersuchtung des Users "blackstar"
+Die Kommentare des Users "blackstar", dessen Kommentare tendenziell negativ sind, werden hier herausgefiltert, damit sie inhaltlich analysiert werden können. Sie scheinen Beschwerden über Lieferprobleme zu enthalten.
+
+```{r}
+blackstar <- GerVader2_comments %>% 
+  filter(comment_author == "blackstar1487") %>% 
+  select(compound, comment_text) %>% 
+  mutate(compound = round(compound, 2))
+blackstar
+
+# Speichere die Daten
+write_tsv(blackstar, file="./data/blackstar_kommentare.tsv")
+
+```
+

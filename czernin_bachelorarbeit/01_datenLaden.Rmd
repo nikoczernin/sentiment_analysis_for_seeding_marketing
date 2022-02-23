@@ -1,0 +1,122 @@
+---
+title: "01_datenLaden"
+output: html_notebook
+---
+
+# Vorbereitung der Daten mit tidytext
+
+
+Tidy Datenformat = Dataframe mit einem Token pro Reihe
+
+Token in dem Fall können Wörter, Sätze oder N-Gramme sein
+
+
+```{r}
+if (!require(readr)) {install.packages(readr)}; library(readr)
+if (!require("tidytext")) {install.packages("tidytext")}; library("tidytext")
+if (!require("textdata")) {install.packages("textdata")}; library("textdata")
+if (!require("dplyr")) {install.packages("dplyr")}; library("dplyr")
+if (!require("ggplot2")) {install.packages("ggplot2")}; library("ggplot2")
+if (!require("tidyr")) {install.packages("tidyr")}; library("tidyr")
+if (!require("stringr")) {install.packages("stringr")}; library("stringr")
+```
+
+
+
+## Trnd Daten importieren
+```{r}
+data_location = "data/trnd/"
+
+# Kommentardaten
+comments <- read_csv(paste(data_location, "de_comments.csv", sep="")) %>% 
+  mutate_at("comment_text", str_replace_all, "\n", " ") %>% 
+  mutate_at("comment_text", str_replace_all, "\t", " ")
+comments
+
+# Ergebnisdaten der Kampagnen
+results <- read_csv(paste(data_location, "de_projekt_ergebnisse.csv", sep=""))  %>% 
+  rename(weiterempfehlungsquote=`weiterempfehlungsquote (%)`) 
+results
+
+# Blogdaten
+blogs <- read_csv(paste(data_location, "de_blogs_meta.csv", sep=""))
+blogs
+
+# Kampagnendaten
+projects <- read_csv(paste(data_location, "de_projekte.csv", sep=""))
+projects
+```
+### Wichtige Variablen:
+
+
+#### pro Kampagne
+* project_id -> Kampagnennummer
+* category -> Domäne der Kampagne
+* participants -> Anzahl der Teilnehmer der Kampagne
+* start_date, end_date -> Start- & Enddatum der Kampagne (DD.MM.YY)
+* weiterempfehlungsquote -> Mittelwert Weiterempfehlungsrate der Teilnehmer
+* rating_value -> Mittelwert Teilnehmerbewertung 
+
+#### pro Blog
+* blog_id -> Blognummer 
+* author -> Blog-Author / Kampagnenmanager
+* n_comments
+
+#### pro Kommentar
+* comment_id -> Kommentarnummer
+* comment_author -> Benutzername des Teilnehmers
+* comment_text -> Fließtext des Kommentars
+* is_moderator -> Boolean, comment_author ist Kampagnenmanager
+
+
+
+
+## Tidy-Datenformate
+
+### Pro Token
+eine Zeile pro Token, mit allen Metadaten annotiert
+
+```{r}
+# Kommentar pro Reihe -> Token pro Reihe pro Kommentar
+# das entfernt Satzzeichen und Großschreibung, außer man will das nicht
+
+wordstidy <- comments %>%
+  select(project_id, blog_id, comment_id, comment_text) %>%
+  unnest_tokens_(output="word", input="comment_text", to_lower = FALSE)
+wordstidy
+```
+
+#### Stoppwörter entfernen
+Stoppwörter sind keine Sentiment-Träger und tragen nicht selber zum Inhalt eines Textes bei. 
+
+```{r}
+# lade Stoppwörter vom stopwords-Modul
+(stopwords_de <- data.frame(stopword=stopwords::stopwords("de")))
+
+# nun werden alle Wörter mit den Stopwörtern verglichen, Matches werden entfernt
+# davor werden alle Wörter temporär kleingeschrieben
+wordstidy <- wordstidy %>% 
+  mutate(word_lower = tolower(word)) %>% 
+  anti_join(stopwords_de, by=c("word_lower"="stopword")) %>%
+  select(-word_lower)
+
+nrow(wordstidy)
+```
+Durch das Entfernen der Stoppwörter konnte das Tidy-Datenformat um ca 50% verkleinert werden
+
+
+
+### Pro Satz
+eine Zeile pro Satz, durch Punkte getrennt, mit allen Metadaten annotiert
+
+```{r}
+# Kommentar pro Reihe -> Satz pro Reihe pro Kommentar
+
+sentencestidy <- comments %>%
+  select(project_id, blog_id, comment_id, comment_text, is_moderator) %>%
+  unnest_tokens_(output="comment_text", input="comment_text", to_lower = FALSE, token="sentences")
+sentencestidy
+```
+
+
+

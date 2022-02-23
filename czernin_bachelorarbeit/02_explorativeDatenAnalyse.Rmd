@@ -1,0 +1,95 @@
+---
+title: "02_explorativeDatenAnalyse"
+output: html_notebook
+---
+
+# Explorative Datenanalyse
+
+## Fehlende Daten
+Nicht alle Kampagnen haben Ergebnisdaten annotiert.
+
+```{r}
+# Kampagnen mit Ergebnissen
+inkl_results <- projects %>% 
+  inner_join(results, by="project_id") %>% 
+  nrow
+paste("Kampagnen mit Ergebnissen:", inkl_results)
+
+# Kampagnen mit Ergebnissen und Kommentaren
+inkl_results_comments <- projects %>% 
+  inner_join(results, by="project_id") %>% 
+  filter(project_id %in% comments$project_id) %>% 
+  nrow
+paste("Kampagnen mit Ergebnissen und Kommentaren:", inkl_results_comments)
+  
+# Kampagnen mit Ergebnissen, Kommentaren und Teilnehmerzahlen
+inkl_results_comments_participants <- projects %>% 
+  inner_join(results, by="project_id") %>% 
+  filter(!is.na(participants)) %>% 
+  filter(project_id %in% comments$project_id) %>% 
+  filter(project_id %in% filter(blogs, !is.na(author))$project_id) %>% 
+  nrow
+paste("Kampagnen mit Ergebnissen, Kommentaren und Teilnehmerzahlen:", inkl_results_comments_participants)
+  
+```
+
+```{r}
+"Blogeinträge pro Projekt"
+blogs %>% 
+  group_by(project_id) %>% 
+  count() %>% 
+  summary
+```
+
+```{r}
+"Kampagnen mit sehr wenigen Teilnehmern"
+projects %>% 
+  filter(participants < 100) %>% 
+  nrow
+```
+
+
+
+
+
+
+## In-Depth: Kampagne 17
+```{r}
+"Projekt 17"
+projects %>% filter(project_id == 17) %>% select(title, category, description) %>% as.list()
+
+p17_comments <- comments %>% 
+  select(project_id, blog_id, comment_id, comment_text) %>%
+  filter(project_id == 17)
+
+p17_comments %>% 
+  select(blog_id, comment_id) %>%
+  group_by(blog_id) %>%
+  summarise(comments_per_blog = n())
+
+"Kommentar Beispiel"
+p17_comments %>% 
+  filter(blog_id == 32) %>% 
+  select(comment_text) %>%
+  slice(1) %>%
+  as.character()
+
+```
+
+
+## Häufigste Wörter
+```{r}
+wordstidy %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 500) %>%
+  mutate(word = reorder(word, n)) %>% # sehr langsame Zeile
+  head(30) %>%
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL) +
+  ggtitle("Häufigste Wörter im Korpus")
+```
+
+
+
+
