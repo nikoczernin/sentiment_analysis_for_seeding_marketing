@@ -25,7 +25,7 @@ Matrikelnummer: 11721138</div>
 
 <div>
 
-### [>>> Zur Arbeit >>>](Czernin_Bachelorarbeit_2021.pdf)
+### [>>> Zur Arbeit >>>](Czernin_Bachelorarbeit.pdf)
 
 #### Abstract
 
