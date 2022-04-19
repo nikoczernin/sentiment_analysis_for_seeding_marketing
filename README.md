@@ -39,11 +39,11 @@ Die Daten, anhand derer die das Analysemodell der ursprünglichen Arbeit erstell
 Die folgenden R-Notebooks müssen in der gegebenen Reihenfolge ausgeführt werden, da frühere die Daten für spätere erstellen.
 
 ## [Übersicht](http://bach.czernin.cc/)
-1.  [Laden der Daten](http://bach.czernin.cc/01_DatenLaden.nb.html)
-2.  [Explorative Datenanalyse (optional)](http://bach.czernin.cc/02_ExplorativeDatenAnalyse_opt.nb.html)
-3.  [Ausführung von GerVADER2](http://bach.czernin.cc/03_GerVader2.nb.html)
-4.  [Sentiment-Tendenzen objektiver Wörter](http://bach.czernin.cc/04_objektiveW%C3%B6rter.nb.html)
-5.  [Sentiment-Analyse](http://bach.czernin.cc/05_Sentiment_Analyse.nb.html)
+1.  [Laden der Daten](http://bach.czernin.cc/01-daten-laden.nb.html)
+2.  [Explorative Datenanalyse (optional)](http://bach.czernin.cc/02-explorative-datenanalyse_opt.nb.html)
+3.  [Ausführung von GerVADER2](http://bach.czernin.cc/03-gervader2.nb.html)
+4.  [Sentiment-Tendenzen objektiver Wörter](http://bach.czernin.cc/04-objektive-woerter.nb.html)
+5.  [Sentiment-Analyse](http://bach.czernin.cc/05-sentiment-analyse.nb.html)
 
 ## Quellen
 In der Arbeit werden zahlreiche Arbeiten zitiert und in der Quellenangabe angeführt. Im Code selber werden die folgenden Arbeiten und GitHub-Repositories zitiert und ihr Code genutzt:
