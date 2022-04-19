@@ -38,7 +38,7 @@ Die Daten, anhand derer die das Analysemodell der ursprünglichen Arbeit erstell
 ### Ausführung
 Die folgenden R-Notebooks müssen in der gegebenen Reihenfolge ausgeführt werden, da frühere die Daten für spätere erstellen.
 
-1.  [Laden der Daten](czernin_bachelorarbeit/01_DatenLaden.nb.html)
+1.  [Laden der Daten](tree/main/czernin_bachelorarbeit/01_DatenLaden.nb.html)
 2.  [Explorative Datenanalyse (optional)](czernin_bachelorarbeit/02_explorativeDatenAnalyse.nb.html)
 3.  [Ausführung von GerVADER2](czernin_bachelorarbeit/03_GerVader2.nb.html)
 4.  [Sentiment-Tendenzen objektiver Wörter](czernin_bachelorarbeit/04_objektiveWörter.nb.html)
