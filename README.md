@@ -38,11 +38,11 @@ Die Daten, anhand derer die das Analysemodell der ursprünglichen Arbeit erstell
 ### Ausführung
 Die folgenden R-Notebooks müssen in der gegebenen Reihenfolge ausgeführt werden, da frühere die Daten für spätere erstellen.
 
-1.  [Laden der Daten](tree/main/czernin_bachelorarbeit/01_DatenLaden.nb.html)
-2.  [Explorative Datenanalyse (optional)](czernin_bachelorarbeit/02_explorativeDatenAnalyse.nb.html)
-3.  [Ausführung von GerVADER2](czernin_bachelorarbeit/03_GerVader2.nb.html)
-4.  [Sentiment-Tendenzen objektiver Wörter](czernin_bachelorarbeit/04_objektiveWörter.nb.html)
-5.  [Sentiment-Analyse](czernin_bachelorarbeit/05_Sentiment_Analyse.nb.html)
+1.  [Laden der Daten](https://github.com/nikoczernin/sentiment_analysis_for_seeding_marketing/blob/main/czernin_bachelorarbeit/01_DatenLaden.nb.html)
+2.  [Explorative Datenanalyse (optional)](https://github.com/nikoczernin/sentiment_analysis_for_seeding_marketing/blob/main/czernin_bachelorarbeit/02_ExplorativeDatenAnalyse_opt.nb.html)
+3.  [Ausführung von GerVADER2](https://github.com/nikoczernin/sentiment_analysis_for_seeding_marketing/blob/main/czernin_bachelorarbeit/03_GerVader2.nb.html)
+4.  [Sentiment-Tendenzen objektiver Wörter](https://github.com/nikoczernin/sentiment_analysis_for_seeding_marketing/blob/main/czernin_bachelorarbeit/04_objektiveW%C3%B6rter.nb.html)
+5.  [Sentiment-Analyse](https://github.com/nikoczernin/sentiment_analysis_for_seeding_marketing/blob/main/czernin_bachelorarbeit/05_Sentiment_Analyse.nb.html)
 
 ## Quellen
 In der Arbeit werden zahlreiche Arbeiten zitiert und in der Quellenangabe angeführt. Im Code selber werden die folgenden Arbeiten und GitHub-Repositories zitiert und ihr Code genutzt:
